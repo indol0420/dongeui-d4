@@ -2941,7 +2941,7 @@ const CHAPTER1 = (() => {
       g.sfx('steps', '[ 저벅… 저벅… ]', { dir: 'right', n: 4, gap: 0.7 });
       await g.say(['2·3층 계단 쪽에서 누군가 내려온다.', '책수레 소리가 아니다. 발소리다.']);
       g.danger(true);
-      await g.say({ t: '이종화 학생.', style: 'voice', slow: true, sfx: 'breath', cap: '[ 낮은 목소리 ]', o: { dir: 'right', danger: true } });
+      await g.say({ t: '이종화 학생.', style: 'voice', slow: true, sfx: 'breath', o: { dir: 'right', danger: true } });
       await g.say('목소리는 정확히 내 이름을 알고 있다.');
       const c = await g.choice('……', ['“…네?”', '“누구세요?”', '(입을 다문다)'], { timeout: 7000, timeoutIndex: 2, danger: true });
       if (c !== 2) return g.gameOver('answer');
@@ -3185,8 +3185,15 @@ const CHAPTER1 = (() => {
     if (g.S.scene !== 's3_stairs' || !f.spBaseline || f.sp >= 4 || g.dev('noTimer')) return;
     f.spTimer = (f.spTimer || 0) + dt;
     const t = f.spTimer;
-    if (t > 14000 && (f.spWarn || 0) < 1) { f.spWarn = 1; g.sfx('cart', '[ 아래층 어딘가에서 드르륵… ]', { dir: 'right', vol: 0.35, dur: 1.8 }); }
-    if (t > 22000 && f.spWarn < 2) { f.spWarn = 2; g.danger(true); g.sfx('cart', '[ 드르륵… 드르륵… 계단을 올라온다 ]', { dir: 'right', vol: 0.75, dur: 2.2, danger: true }); }
+    // 효과음 글자에는 소리만, 어디서 나는 소리인지는 대사로
+    if (t > 14000 && (f.spWarn || 0) < 1) {
+      f.spWarn = 1;
+      g.run(async gg => { gg.sfx('cart', '[ 드르륵… ]', { dir: 'right', vol: 0.35, dur: 1.8 }); await gg.say({ t: '아래층 어딘가에서 바퀴 구르는 소리가 들린다.', style: 'dim' }); });
+    }
+    if (t > 22000 && f.spWarn < 2) {
+      f.spWarn = 2; g.danger(true);
+      g.run(async gg => { gg.sfx('cart', '[ 드르륵… 드르륵… ]', { dir: 'right', vol: 0.75, dur: 2.2, danger: true }); await gg.say({ t: '바퀴 소리가 계단을 올라오고 있다.', style: 'red' }); });
+    }
     if (t > SP_LIMIT && f.spWarn < 3 && !g.busy) { f.spWarn = 3; g.run(gg => EVENTS.stairsCaught(gg)); }
   }
   async function landingPoster(g) {
