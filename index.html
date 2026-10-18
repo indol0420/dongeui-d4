@@ -113,17 +113,23 @@ button{font:inherit;color:inherit}
 #stage.shake{animation:shake .5s linear}
 #stage.shake-soft{animation:shakeSoft .5s linear}
 #stage.rumble{animation:rumble .55s linear}
+#stage.rumble-lite{animation:rumbleLite .45s linear}
+@keyframes rumbleLite{0%,100%{transform:none}15%{transform:translate(-.12cqw,.05cqw)}30%{transform:translate(.11cqw,-.04cqw)}45%{transform:translate(-.09cqw,-.03cqw)}60%{transform:translate(.07cqw,.03cqw)}75%{transform:translate(-.04cqw,0)}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @keyframes rumble{0%,100%{transform:none}10%{transform:translate(-.22cqw,.08cqw)}20%{transform:translate(.2cqw,-.06cqw)}30%{transform:translate(-.18cqw,-.05cqw)}40%{transform:translate(.2cqw,.06cqw)}50%{transform:translate(-.14cqw,.04cqw)}60%{transform:translate(.12cqw,-.04cqw)}70%{transform:translate(-.08cqw,.02cqw)}80%{transform:translate(.05cqw,0)}90%{transform:translate(-.03cqw,0)}}
 /* 화면에 작게 스쳐 가는 효과음 글자 (예: 드르륵…) */
-.onoma{position:absolute;left:50%;top:69%;z-index:13;pointer-events:none;white-space:nowrap;transform:translate(-50%,-50%) rotate(-3deg);animation:onomaDrag 1.6s cubic-bezier(.2,.6,.4,1) forwards}
+.onoma{--stack:0;position:absolute;left:50%;top:calc(69% - var(--stack) * 6%);z-index:13;pointer-events:none;white-space:nowrap;transform:translate(-50%,-50%) rotate(-3deg);animation:onomaDrag 1.6s cubic-bezier(.2,.6,.4,1) forwards}
+.onoma.left{left:5cqw;top:calc(65% - var(--stack) * 6%);transform:translate(0,-50%) rotate(-4deg);animation-name:onomaDragL}
+.onoma.right{left:auto;right:5cqw;top:calc(65% - var(--stack) * 6%);transform:translate(0,-50%) rotate(3deg);animation-name:onomaDragR}
+@keyframes onomaDragL{0%{transform:translate(1.2cqw,-50%) rotate(-4deg)}100%{transform:translate(-.6cqw,-50%) rotate(-4deg)}}
+@keyframes onomaDragR{0%{transform:translate(-1.2cqw,-50%) rotate(3deg)}100%{transform:translate(.6cqw,-50%) rotate(3deg)}}
+.onoma.danger b{color:#e0655a;text-shadow:.35cqw 0 0 rgba(224,101,90,.22),.7cqw 0 0 rgba(224,101,90,.08)}
 @keyframes onomaDrag{0%{transform:translate(-46%,-50%) rotate(-3deg)}100%{transform:translate(-54%,-50%) rotate(-3deg)}}
 .onoma b{display:inline-block;font-family:var(--font-display);font-weight:400;font-size:max(18px,2.6cqw);line-height:1;color:#cfc8b6;letter-spacing:.18em;opacity:0;transform:skewX(-8deg);text-shadow:.35cqw 0 0 rgba(207,200,182,.18),.7cqw 0 0 rgba(207,200,182,.07);animation:onomaCh 1.6s linear forwards}
-.onoma b:nth-child(2){animation-delay:.08s}
-.onoma b:nth-child(3){animation-delay:.16s}
-.onoma b:nth-child(4){animation-delay:.3s}
 @keyframes onomaCh{0%{opacity:0;transform:skewX(-8deg) translate(.25cqw,.15cqw)}7%{opacity:.72;transform:skewX(-8deg) translate(-.15cqw,-.08cqw)}14%{transform:skewX(-8deg) translate(.1cqw,.05cqw)}20%{transform:skewX(-8deg)}60%{opacity:.6}100%{opacity:0;transform:skewX(-8deg)}}
 .onoma.soft{animation:none}
 .onoma.soft b{animation:onomaSoft 2s ease-out forwards;text-shadow:none}
+.onoma.soft.danger b{color:#e0655a}
 @keyframes onomaSoft{0%{opacity:0}20%{opacity:.65}60%{opacity:.55}100%{opacity:0}}
 @keyframes shake{0%,100%{transform:none}15%{transform:translate(-.6%,.4%)}30%{transform:translate(.7%,-.5%)}45%{transform:translate(-.5%,-.3%)}60%{transform:translate(.4%,.5%)}75%{transform:translate(-.3%,.2%)}}
 @keyframes shakeSoft{0%,100%{transform:none}30%{transform:translate(-.15%,.1%)}60%{transform:translate(.15%,-.1%)}}
@@ -929,7 +935,7 @@ const D4 = (() => {
         narrText.className = 'text ' + (ln.style || '');
         narrEl.classList.remove('done');
         if (ln.sfx) sfx(ln.sfx, ln.cap, ln.o || {});
-        else if (ln.cap) caption(ln.cap, ln.o || {});
+        else if (ln.cap) soundCap(ln.cap, ln.o || {});
         if (ln.fx) fx(ln.fx);
         if (ln.do) ln.do(api);
         full = ln.t; const spd = textSpeed() * (ln.slow ? 3 : 1);
@@ -1061,21 +1067,37 @@ const D4 = (() => {
     e.classList.toggle('danger', !!isDanger);
     e.classList.remove('go'); void e.offsetWidth; e.classList.add('go');
   }
-  function sfx(name, cap, o = {}) { Sound.play(name, o); if (cap) caption(cap, o); }
+  function sfx(name, cap, o = {}) { Sound.play(name, o); if (cap) soundCap(cap, o); }
+  // "[ 지잉 ]"처럼 대괄호로 쓴 효과음은 화면 효과음 글자로, 그 밖의 안내(배터리 등)는 자막 상자로.
+  function soundCap(cap, o = {}) {
+    const m = /^\[\s*([\s\S]+?)\s*\]$/.exec(cap);
+    if (m) onomaText(m[1], o); else caption(cap, o);
+  }
+  function onoma(name, text, o = {}) { Sound.play(name, o); onomaText(text, o.dir ? o : Object.assign({ dir: 'behind' }, o)); }
   // 화면에 작게 스쳐 가는 효과음 글자. 소리가 안 나와도 소리가 났다는 걸 느끼게 하고, 화면을 살짝 떨게 한다.
-  function onoma(name, text, o = {}) {
-    Sound.play(name, o);
+  // 왼쪽·오른쪽 소리는 그쪽 가장자리에, 나머지는 화면 아래 가운데에. 동시에 여러 개면 위로 쌓인다.
+  function onomaText(text, o = {}) {
+    const side = o.dir === 'left' || o.dir === 'right' ? o.dir : 'mid';
+    const chars = Array.from(text);
     const el = document.createElement('div');
-    el.className = 'onoma' + (reduce() ? ' soft' : '');
+    el.className = `onoma ${side}${o.danger ? ' danger' : ''}${reduce() ? ' soft' : ''}`;
     el.setAttribute('aria-hidden', 'true');
-    el.innerHTML = Array.from(text).map(ch => `<b>${esc(ch)}</b>`).join('');
+    el.style.setProperty('--stack', Math.min(3, $$(`.onoma.${side}`, stage).length));
+    el.innerHTML = chars.map((ch, i) => `<b style="animation-delay:${Math.min(i * 0.07, 0.9).toFixed(2)}s">${ch === ' ' ? '&nbsp;' : esc(ch)}</b>`).join('');
     stage.appendChild(el);
-    edge(o.dir || 'behind', o.danger);
-    if (!reduce()) {
-      stage.classList.remove('rumble'); void stage.offsetWidth; stage.classList.add('rumble');
-      setTimeout(() => stage.classList.remove('rumble'), 600);
+    if (o.dir) edge(o.dir, o.danger);
+    // 떨림: 위험한 소리는 보통, 큰 소리는 약하게, 작은 소리(볼륨 0.5 미만)는 떨지 않는다
+    const vol = o.vol == null ? 1 : o.vol;
+    const cls = o.danger ? 'rumble' : vol >= 0.5 ? 'rumble-lite' : '';
+    const cur = stage.classList.contains('rumble') ? 2 : stage.classList.contains('rumble-lite') ? 1 : 0;
+    if (cls && !reduce() && (cls === 'rumble' ? 2 : 1) >= cur) {
+      stage.classList.remove('rumble', 'rumble-lite'); void stage.offsetWidth; stage.classList.add(cls);
+      clearTimeout(onomaText.t); onomaText.t = setTimeout(() => stage.classList.remove('rumble', 'rumble-lite'), 600);
     }
-    setTimeout(() => el.remove(), 2200);
+    // 스크린 리더용으로는 기존 자막 영역에 글자만 조용히 남긴다
+    const sr = document.createElement('span'); sr.className = 'sr-only'; sr.textContent = text; capsEl.appendChild(sr);
+    setTimeout(() => sr.remove(), 3000);
+    setTimeout(() => el.remove(), 1800 + Math.min(chars.length * 70, 900) + 400);
   }
   function fx(name) {
     if (name === 'shake') {
