@@ -3785,7 +3785,7 @@ const CHAPTER1 = (() => {
      정답은 '정답 보기'를 한 번 더 확인해야 보인다. */
   function hintKey(g) {
     const f = g.flags, st = g.S.stage;
-    if (st === 1) return f._lightUsed ? 's1_door' : 's1_light';
+    if (st === 1) return !f._lightUsed ? 's1_light' : !f.bagOpen ? 's1_desk' : 's1_door';
     if (st === 2) { if (!f.cart) return 's2_cart'; if (!f.drawer) return (f.placedCount || 0) < 4 ? 's2_sort' : 's2_drawer'; return 's2_stairs'; }
     if (st === 3) {
       if (g.S.scene === 's3_stairs') return 's3_stairs';
@@ -3800,6 +3800,10 @@ const CHAPTER1 = (() => {
     s1_light: {
       think: ['너무 어둡다. 휴대폰 손전등부터 켜야 한다.', '손전등을 켜 두면 배터리가 닳는다. 17%로는 오래 못 버틴다. 가방에 보조배터리를 넣어 뒀던 것 같은데.'],
       answer: 'F 키로 손전등을 켜고, 책상 오른쪽 가방을 클릭하자.'
+    },
+    s1_desk: {
+      think: ['일단 내 자리 주변부터 조사해 보자. 책상 위, 가방, 벽… 챙길 게 있을지도 몰라.', '손전등 배터리가 17%뿐이다. 가방에 보조배터리를 넣어 뒀던 것 같은데.'],
+      answer: '책상 오른쪽 가방을 열면 보조배터리와 학생증이 있다. 책상 위 플래너도 챙겨 두자.'
     },
     s1_door: {
       think: [
@@ -3925,7 +3929,7 @@ const CHAPTER1 = (() => {
   }
   function objective(g) {
     const f = g.flags, st = g.S.stage;
-    if (st === 1) return !f._lightUsed ? '휴대폰 손전등을 켜자 (F)' : '제6열람실에서 나갈 방법을 찾자';
+    if (st === 1) return !f._lightUsed ? '휴대폰 손전등을 켜자 (F)' : !f.bagOpen ? '내 자리 주변을 살펴보자' : '제6열람실에서 나갈 방법을 찾자';
     if (st === 2) {
       if (!f.cart) return '4층을 살펴보자';
       if (!f.drawer) return (f.placedCount || 0) < 4 ? '북트럭의 책을 제자리에 돌려놓자' : '안내데스크 서랍을 열자';
